@@ -30,7 +30,7 @@ int main() {
 }
 ```
 ---
-```x86asm
+```asm
 Disassembly of section .text:
 
 0000000008048000 <.text>:
