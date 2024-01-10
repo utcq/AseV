@@ -1,0 +1,21 @@
+Compilation:
+    clang++
+    GNU as
+
+Dumping:
+    objdump
+    https://disasm.pro/
+
+Linking:
+    ld
+
+ELF Generation:
+    ELFIO [https://github.com/serge1/ELFIO/]
+
+References:
+    https://www.felixcloutier.com/
+    https://www.ic.unicamp.br/~celio/mc404/opcodes.html
+    http://ref.x86asm.net/coder64.html
+
+    -> AMD64 Volume 3
+
