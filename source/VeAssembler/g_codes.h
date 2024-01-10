@@ -3,17 +3,26 @@
 #ifndef _AS_CODES_H
 #define _AS_CODES_H
 
-#define F_REX_OP 0x48
+#define F_REX0_OP 0x48
+#define F_REX1_OP 0x49
 
 #define I_MOV_I32_OP 0xC7
 #define I_ADD_I32_OP 0x81
 #define I_SUB_I32_OP 0x81
 #define I_IMUL_I32_OP 0x69
+#define I_XOR_I32_OP 0x81
 
 #define I_MOV_R64_OP 0x89
 #define I_ADD_R64_OP 0x01
-#define I_SUB_R64_OP 0x81
-#define I_IMUL_R64_OP 0x69
+#define I_SUB_R64_OP 0x29
+#define I_IMUL_R64_OP_1 0x0F
+#define I_IMUL_R64_OP_2 0xAF
+#define I_XOR_R64_OP 0x31
+
+#define F_SYSCALL_OP 0x0F
+#define I_SYSCALL_OP 0x05
+
+#define I_INTERRUPT_OP 0xCD
 
 #define R_RAX_OP 0x00
 #define R_RCX_OP 0x01

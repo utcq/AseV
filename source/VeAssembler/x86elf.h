@@ -28,9 +28,16 @@ class vAsm {
         size_t add_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value);
         size_t sub_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value);
         size_t imul_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value);
+        size_t xor_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value);
 
         size_t move_reg(char *buffer, size_t c_pos, uint8_t reg1, uint8_t reg2);
         size_t add_reg(char *buffer, size_t c_pos, uint8_t reg1, uint8_t reg2);
+        size_t sub_reg(char *buffer, size_t c_pos, uint8_t reg1, uint8_t reg2);
+        size_t imul_reg(char *buffer, size_t c_pos, uint8_t reg1, uint8_t reg2);
+        size_t xor_reg(char *buffer, size_t c_pos, uint8_t reg1, uint8_t reg2);
+
+        size_t syscall(char *buffer, size_t c_pos);
+        size_t interrupt(char *buffer, size_t c_pos, int8_t value);
 
         void save_obj();
 

@@ -10,13 +10,10 @@
 
 namespace utils {
     uint8_t _rcalc(uint8_t reg, uint8_t mod=3, uint8_t rm=0) {
-        return _c_mrmb(mod,reg,rm);
+        return 0xc0 + reg;
     }
     uint8_t _cregs(uint8_t target, uint8_t source, uint8_t mod=3, uint8_t rm=0) {
-        uint8_t reg1 = _rcalc(target, mod, rm);
-        uint8_t reg2 = _rcalc(source, mod, rm);
-
-        return (mod << 6) | (reg1 << 3) | reg2;
+        return 0xc0 + (8 * source) + target;
     }
 }
 
@@ -61,7 +58,7 @@ void vAsm::save_obj() {
 }
 
 size_t vAsm::move_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value) {
-    uint8_t rex  = F_REX_OP;
+    uint8_t rex  = F_REX0_OP;
     uint8_t inst = I_MOV_I32_OP;
     uint8_t regp = utils::_rcalc(reg);
     uint8_t val[4];
@@ -79,7 +76,7 @@ size_t vAsm::move_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value) {
 
 
 size_t vAsm::add_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value){
-    uint8_t rex  = F_REX_OP;
+    uint8_t rex  = F_REX0_OP;
     uint8_t inst = I_ADD_I32_OP;
     uint8_t regp = utils::_rcalc(reg);
     uint8_t val[4];
@@ -97,9 +94,9 @@ size_t vAsm::add_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value){
 
 
 size_t vAsm::sub_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value) {
-    uint8_t rex  = F_REX_OP;
+    uint8_t rex  = F_REX0_OP;
     uint8_t inst = I_SUB_I32_OP;
-    uint8_t regp = utils::_rcalc(reg+5);
+    uint8_t regp = utils::_rcalc(reg)|40; // IDK sub just likes reg+40
     int8_t val[4];
 
     for (int i = 0; i < 4; ++i) { val[i] = (value >> (8 * i)) & 0xFF; }
@@ -115,9 +112,26 @@ size_t vAsm::sub_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value) {
 
 
 size_t vAsm::imul_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value) {
-    uint8_t rex  = F_REX_OP;
+    uint8_t rex  = F_REX0_OP;
     uint8_t inst = I_IMUL_I32_OP;
-    uint8_t regp = utils::_rcalc(reg);
+    uint8_t regp = utils::_rcalc(reg) | (1 << 5); // OR to make imul return into reg
+    uint8_t val[4];
+
+    for (int i = 0; i < 4; ++i) { val[i] = (value >> (8 * i)) & 0xFF; }
+
+    size_t size = sizeof(rex) + sizeof(inst) + sizeof(regp) + sizeof(val);
+
+    memcpy(buffer + c_pos, &rex, sizeof(rex));
+    memcpy(buffer + c_pos + 1, &inst, sizeof(inst));
+    memcpy(buffer + c_pos + 2, &regp, sizeof(regp));
+    memcpy(buffer + c_pos + 3, val, sizeof(val));
+    return c_pos + size;
+}
+
+size_t vAsm::xor_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value) {
+    uint8_t rex  = F_REX0_OP;
+    uint8_t inst = I_XOR_I32_OP;
+    uint8_t regp = utils::_rcalc(reg)+48;
     uint8_t val[4];
 
     for (int i = 0; i < 4; ++i) { val[i] = (value >> (8 * i)) & 0xFF; }
@@ -133,7 +147,8 @@ size_t vAsm::imul_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value) {
 
 
 size_t vAsm::move_reg(char *buffer, size_t c_pos, uint8_t reg1, uint8_t reg2) {
-    uint8_t rex  = F_REX_OP;
+
+    uint8_t rex  = F_REX0_OP;
     uint8_t inst = I_MOV_R64_OP;
     uint8_t regp = utils::_cregs(reg1, reg2);
 
@@ -146,7 +161,7 @@ size_t vAsm::move_reg(char *buffer, size_t c_pos, uint8_t reg1, uint8_t reg2) {
 }
 
 size_t vAsm::add_reg(char *buffer, size_t c_pos, uint8_t reg1, uint8_t reg2) {
-    uint8_t rex  = F_REX_OP;
+    uint8_t rex  = F_REX0_OP;
     uint8_t inst = I_ADD_R64_OP;
     uint8_t regp = utils::_cregs(reg1, reg2);
 
@@ -155,5 +170,70 @@ size_t vAsm::add_reg(char *buffer, size_t c_pos, uint8_t reg1, uint8_t reg2) {
     memcpy(buffer + c_pos, &rex, sizeof(rex));
     memcpy(buffer + c_pos + 1, &inst, sizeof(inst));
     memcpy(buffer + c_pos + 2, &regp, sizeof(regp));
+    return c_pos + size;
+}
+
+
+size_t vAsm::sub_reg(char *buffer, size_t c_pos, uint8_t reg1, uint8_t reg2) {
+    uint8_t rex  = F_REX0_OP;
+    uint8_t inst = I_SUB_R64_OP;
+    uint8_t regp = utils::_cregs(reg1,reg2);
+
+    size_t size = sizeof(rex) + sizeof(inst) + sizeof(regp);
+
+    memcpy(buffer + c_pos, &rex, sizeof(rex));
+    memcpy(buffer + c_pos + 1, &inst, sizeof(inst));
+    memcpy(buffer + c_pos + 2, &regp, sizeof(regp));
+    return c_pos + size;
+}
+
+size_t vAsm::imul_reg(char *buffer, size_t c_pos, uint8_t reg1, uint8_t reg2) {
+    uint8_t rex  = F_REX0_OP;
+    uint8_t inst1 = I_IMUL_R64_OP_1;
+    uint8_t inst2 = I_IMUL_R64_OP_2;
+    uint8_t regp = utils::_cregs(reg2, reg1);
+
+    size_t size = sizeof(rex) + sizeof(inst1) + sizeof(inst2) + sizeof(regp);
+
+    memcpy(buffer + c_pos, &rex, sizeof(rex));
+    memcpy(buffer + c_pos + 1, &inst1, sizeof(inst1));
+    memcpy(buffer + c_pos + 2, &inst2, sizeof(inst2));
+    memcpy(buffer + c_pos + 3, &regp, sizeof(regp));
+    return c_pos + size;
+}
+
+size_t vAsm::xor_reg(char *buffer, size_t c_pos, uint8_t reg1, uint8_t reg2) {
+    uint8_t rex  = F_REX0_OP;
+    uint8_t inst = I_XOR_R64_OP;
+    uint8_t regp = utils::_cregs(reg1,reg2);
+
+    size_t size = sizeof(rex) + sizeof(inst) + sizeof(regp);
+
+    memcpy(buffer + c_pos, &rex, sizeof(rex));
+    memcpy(buffer + c_pos + 1, &inst, sizeof(inst));
+    memcpy(buffer + c_pos + 2, &regp, sizeof(regp));
+    return c_pos + size;
+}
+
+
+size_t vAsm::syscall(char *buffer, size_t c_pos) {
+    uint8_t fnc  = F_SYSCALL_OP;
+    uint8_t inst = I_SYSCALL_OP;
+
+    size_t size = sizeof(fnc) + sizeof(inst);
+
+    memcpy(buffer + c_pos, &fnc, sizeof(fnc));
+    memcpy(buffer + c_pos + 1, &inst, sizeof(inst));
+    return c_pos + size;
+}
+
+size_t vAsm::interrupt(char *buffer, size_t c_pos, int8_t value) {
+    uint8_t inst = I_INTERRUPT_OP;
+
+
+    size_t size = sizeof(inst) + sizeof(value);
+
+    memcpy(buffer + c_pos, &inst, sizeof(inst));
+    memcpy(buffer + c_pos + 1, &value, sizeof(value));
     return c_pos + size;
 }
