@@ -75,6 +75,7 @@
         "stop_token": "cpp",
         "streambuf": "cpp",
         "thread": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "elfio.hpp": "c"
     }
 }

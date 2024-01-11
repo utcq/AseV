@@ -24,6 +24,9 @@
 
 #define I_INTERRUPT_OP 0xCD
 
+#define I_RET_OP 0xC3
+#define I_JMP_OP 0xE9
+
 #define R_RAX_OP 0x00
 #define R_RCX_OP 0x01
 #define R_RDX_OP 0x02

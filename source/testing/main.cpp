@@ -5,13 +5,14 @@
 int main() {
     vAsm *assembler = new vAsm("generated");
     char* text = static_cast<char*>(malloc(
-        (8) // N. instructions
+        (14) // N. instructions
         *8 // Instruction max size
         *sizeof(char) // Char size
     ));
 
 
     size_t c_pos = 0;
+    /*assembler->label("main");
     c_pos = assembler->move_i32(text, c_pos, R_RAX_OP, 10);
     c_pos = assembler->add_i32(text, c_pos, R_RAX_OP, 10);
     c_pos = assembler->sub_i32(text, c_pos, R_RSP_OP, 10);
@@ -24,8 +25,18 @@ int main() {
     c_pos = assembler->xor_reg(text, c_pos, R_RDI_OP, R_RBX_OP);
     c_pos = assembler->syscall(text, c_pos);
     c_pos = assembler->interrupt(text, c_pos, 0x80);
+    c_pos = assembler->ret(text, c_pos);
+    assembler->label("_start");
+    c_pos = assembler->jump(text, c_pos, assembler->label_resolve("main"));*/
+    
+    assembler->label("main");
+    c_pos = assembler->move_i32(text, c_pos, R_RAX_OP, 10);
+    c_pos = assembler->ret(text, c_pos);
 
+    assembler->label("_start");
+    c_pos = assembler->move_i32(text, c_pos, R_RAX_OP, 10);
+    //c_pos = assembler->jump(text, c_pos, assembler->label_resolve("main"));
 
-    assembler->new_section(".text", text, c_pos, SECT_TYPES::TEXT);
+    assembler->write_text(text, c_pos);
     assembler->save_obj();
 }
