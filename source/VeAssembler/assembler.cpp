@@ -47,16 +47,6 @@ void vAsm::write_text(char buffer[], size_t size) {
     ELFIO::symbol_section_accessor symbol_writer( *this->writer, sym_sec );
     ELFIO::Elf_Word                sym_index = symbol_writer.add_symbol(
                        this->nstr_index, 0, 0, ELFIO::STB_LOCAL, ELFIO::STT_NOTYPE, 0, this->data->get_index() );
-    
-
-    for (auto &label: this->labels) {
-        const char *name = label.first.c_str();
-        uint32_t addr = label.second.first;
-        size_t size = label.second.second;
-        sym_index = symbol_writer.add_symbol( str_writer, name, addr, size, ELFIO::STB_WEAK,
-                        ELFIO::STT_FUNC, 0, this->text->get_index() );
-    }
-
 
     ELFIO::section* rel_sec = this->writer->sections.add( ".rel.text" );
     rel_sec->set_type( ELFIO::SHT_REL );
@@ -66,7 +56,17 @@ void vAsm::write_text(char buffer[], size_t size) {
     rel_sec->set_entry_size( this->writer->get_default_entry_size( ELFIO::SHT_REL ) );
 
     ELFIO::relocation_section_accessor rel_writer( *this->writer, rel_sec );
-    rel_writer.add_entry( 0, sym_index, ELFIO::R_X86_64_64 );
+
+    for (auto &label: this->labels) {
+        const char *name = label.first.c_str();
+        uint32_t addr = label.second.first;
+        size_t size = label.second.second;
+        sym_index = symbol_writer.add_symbol( str_writer, name, addr, size, ELFIO::STB_WEAK,
+                        ELFIO::STT_FUNC, 0, this->text->get_index() );
+        //rel_writer.add_entry( 0, sym_index, ELFIO::R_X86_64_64 );
+    }
+
+
 
 
     this->text->set_data( buffer, size );

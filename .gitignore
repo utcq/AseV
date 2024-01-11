@@ -2,3 +2,4 @@ bin/*
 generated.o
 **/.vscode/
 .vscode/*
+gn
