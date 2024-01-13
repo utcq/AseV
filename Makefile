@@ -15,7 +15,17 @@ run:
 	./$(EXECUTABLE)
 
 dump:
-	objdump -drwC -Mintel generated.o
+	objdump -DrwC -Mintel generated.o
+
+link:
+	ld generated.o -o gn
+	
+
+exec: link
+	./gn
+
+debug: link
+	gdb gn
 
 clean:
 	rm -f generated.o

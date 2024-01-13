@@ -10,33 +10,33 @@ int main() {
         *sizeof(char) // Char size
     ));
 
+    char* data = static_cast<char*>(malloc(
+        32 // N. Bytes
+        *sizeof(char) // Char size
+    ));
 
-    size_t c_pos = 0;
-    /*assembler->label("main");
-    c_pos = assembler->move_i32(text, c_pos, R_RAX_OP, 10);
-    c_pos = assembler->add_i32(text, c_pos, R_RAX_OP, 10);
-    c_pos = assembler->sub_i32(text, c_pos, R_RSP_OP, 10);
-    c_pos = assembler->imul_i32(text, c_pos, R_RSP_OP, 10);
-    c_pos = assembler->xor_i32(text, c_pos, R_RDI_OP, 10);
-    c_pos = assembler->move_reg(text, c_pos, R_RSP_OP, R_RDI_OP);
-    c_pos = assembler->add_reg(text, c_pos, R_RAX_OP, R_RCX_OP);
-    c_pos = assembler->sub_reg(text, c_pos, R_RBP_OP, R_RSI_OP);
-    c_pos = assembler->imul_reg(text, c_pos, R_RSP_OP, R_RAX_OP);
-    c_pos = assembler->xor_reg(text, c_pos, R_RDI_OP, R_RBX_OP);
-    c_pos = assembler->syscall(text, c_pos);
-    c_pos = assembler->interrupt(text, c_pos, 0x80);
-    c_pos = assembler->ret(text, c_pos);
-    assembler->label("_start");
-    c_pos = assembler->jump(text, c_pos, assembler->label_resolve("main"));*/
-    
+
+    size_t t_pos = 0;
+    size_t d_pos = 0;
+
+    assembler->data_label("msg");
+    d_pos = assembler->ascii(data, d_pos, "Hello, world!\n");
+
     assembler->label("main");
-    c_pos = assembler->move_i32(text, c_pos, R_RAX_OP, 10);
-    c_pos = assembler->ret(text, c_pos);
+    t_pos = assembler->move_i32(text, t_pos, R_RAX_OP, 1);
+    t_pos = assembler->move_i32(text, t_pos, R_RDI_OP, 1);
+    t_pos = assembler->move_i64(text, t_pos, R_RSI_OP, assembler->label_resolve("msg"));
+    t_pos = assembler->move_i32(text, t_pos, R_RDX_OP, 14);
+    t_pos = assembler->syscall(text, t_pos);
+    t_pos = assembler->ret(text, t_pos);
 
     assembler->label("_start");
-    c_pos = assembler->move_i32(text, c_pos, R_RAX_OP, 10);
-    //c_pos = assembler->jump(text, c_pos, assembler->label_resolve("main"));
+    t_pos = assembler->call(text, t_pos, assembler->label_resolve("main"));
+    t_pos = assembler->move_i32(text, t_pos, R_RAX_OP, 60);
+    t_pos = assembler->move_i32(text, t_pos, R_RDI_OP, 0);
+    t_pos = assembler->syscall(text, t_pos);
 
-    assembler->write_text(text, c_pos);
+    assembler->write_data(data, d_pos);
+    assembler->write_text(text, t_pos);
     assembler->save_obj();
 }

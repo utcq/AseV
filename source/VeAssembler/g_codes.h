@@ -19,6 +19,8 @@
 #define I_IMUL_R64_OP_2 0xAF
 #define I_XOR_R64_OP 0x31
 
+#define I_MOV_ABS_I32_OP 0xBE
+
 #define F_SYSCALL_OP 0x0F
 #define I_SYSCALL_OP 0x05
 
@@ -26,6 +28,7 @@
 
 #define I_RET_OP 0xC3
 #define I_JMP_OP 0xE9
+#define I_CALL_OP 0xE8
 
 #define R_RAX_OP 0x00
 #define R_RCX_OP 0x01
