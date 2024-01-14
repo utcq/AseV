@@ -1,6 +1,6 @@
 #include <elfio/elfio.hpp>
 #include <cstdlib>
-#include <unordered_map>
+#include <map>
 
 #ifndef _AS_x86ELF_H
 #define _AS_x86ELF_H
@@ -36,6 +36,7 @@ class vAsm {
         size_t move_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value);
         size_t add_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value);
         size_t sub_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value);
+
         size_t imul_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value);
         size_t xor_i32(char* buffer, size_t c_pos, uint8_t reg, int32_t value);
 
@@ -52,12 +53,15 @@ class vAsm {
 
         void label(const char* name, size_t size=0);
         void data_label(const char* name, size_t size=0);
-        uint32_t label_resolve(const char *name);
-        size_t jump(char *buffer, size_t c_pos, uint32_t addr);
-        size_t call(char *buffer, size_t c_pos, uint32_t addr);
+        uint64_t label_resolve(const char *name);
+        size_t jump(char *buffer, size_t c_pos, uint64_t addr);
+        size_t call(char *buffer, size_t c_pos, uint64_t addr);
 
         size_t move_i64(char* buffer, size_t c_pos, uint8_t reg, uint64_t value);
         size_t ascii(char *buffer, size_t c_pos, const char *value);
+        size_t resb(char *buffer, size_t c_pos, size_t value);
+        size_t labsize(uint64_t value);
+        size_t dbi32(char *buffer, size_t c_pos, int32_t value);
 
         void write_text(char buffer[], size_t size);
         void write_data(char buffer[], size_t size);
@@ -66,10 +70,11 @@ class vAsm {
     private:
         ELFIO::elfio *writer;
         std::string filename;
-        std::unordered_map<std::string, std::pair<uint32_t, size_t>> labels;
-        std::unordered_map<std::string, std::pair<uint32_t, size_t>> dlabels;
-        uint32_t current_address=0;
-        uint32_t data_current_address=0;
+        std::map<std::string, std::pair<uint64_t, size_t>> labels;
+        std::map<std::string, std::pair<uint64_t, size_t>> dlabels;
+        uint64_t current_address=0;
+        uint64_t data_current_address=0;
+        char *data_current_name;
 
         ELFIO::section *text;
         ELFIO::section *data;

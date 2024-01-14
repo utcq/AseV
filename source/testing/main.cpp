@@ -20,14 +20,32 @@ int main() {
     size_t d_pos = 0;
 
     assembler->data_label("msg");
-    d_pos = assembler->ascii(data, d_pos, "Hello, world!\n");
+    d_pos = assembler->ascii(data, d_pos, "user said > ");
+
+    assembler->data_label("user_in");
+    d_pos = assembler->resb(data, d_pos, 32);
+
 
     assembler->label("main");
+
+    t_pos = assembler->move_i32(text, t_pos, R_RAX_OP, 0);
+    t_pos = assembler->move_i32(text, t_pos, R_RDI_OP, 0);
+    t_pos = assembler->move_i64(text, t_pos, R_RSI_OP, assembler->label_resolve("user_in"));
+    t_pos = assembler->move_i32(text, t_pos, R_RDX_OP, 32);
+    t_pos = assembler->syscall(text, t_pos);
+
     t_pos = assembler->move_i32(text, t_pos, R_RAX_OP, 1);
     t_pos = assembler->move_i32(text, t_pos, R_RDI_OP, 1);
     t_pos = assembler->move_i64(text, t_pos, R_RSI_OP, assembler->label_resolve("msg"));
-    t_pos = assembler->move_i32(text, t_pos, R_RDX_OP, 14);
+    t_pos = assembler->move_i64(text, t_pos, R_RDX_OP, assembler->labsize(assembler->label_resolve("msg")));
     t_pos = assembler->syscall(text, t_pos);
+
+    t_pos = assembler->move_i32(text, t_pos, R_RAX_OP, 1);
+    t_pos = assembler->move_i32(text, t_pos, R_RDI_OP, 1);
+    t_pos = assembler->move_i32(text, t_pos, R_RSI_OP, assembler->label_resolve("user_in"));
+    t_pos = assembler->move_i64(text, t_pos, R_RDX_OP, assembler->labsize(assembler->label_resolve("user_in")));
+    t_pos = assembler->syscall(text, t_pos);
+
     t_pos = assembler->ret(text, t_pos);
 
     assembler->label("_start");

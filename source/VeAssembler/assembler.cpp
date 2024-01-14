@@ -69,7 +69,7 @@ void vAsm::write_text(char buffer[], size_t size) {
 
     for (auto &label: this->dlabels) {
         const char *name = label.first.c_str();
-        uint32_t addr = label.second.first;
+        uint64_t addr = label.second.first;
         size_t size = label.second.second;
         sym_index = symbol_writer.add_symbol( str_writer, name, addr, size, ELFIO::STB_WEAK,
                         ELFIO::STT_FUNC, 0, this->data->get_index() );
@@ -78,7 +78,7 @@ void vAsm::write_text(char buffer[], size_t size) {
 
     for (auto &label: this->labels) {
         const char *name = label.first.c_str();
-        uint32_t addr = label.second.first;
+        uint64_t addr = label.second.first;
         size_t size = label.second.second;
         sym_index = symbol_writer.add_symbol( str_writer, name, addr, size, ELFIO::STB_WEAK,
                         ELFIO::STT_FUNC, 0, this->text->get_index() );
@@ -304,23 +304,34 @@ void vAsm::label(const char* name, size_t size) {
         this->writer->set_entry( this->current_address );
     }
     this->labels[name] = std::make_pair(this->current_address, size);
+    if (this->data_current_name) {
+        auto clab = this->dlabels.find(this->data_current_name);
+        uint64_t addr = clab->second.first;
+        clab->second.second = this->data_current_address - addr;
+        this->data_current_name = NULL;
+    }
 }
 
 void vAsm::data_label(const char* name, size_t size) {
     this->dlabels[name] = std::make_pair(this->data_current_address, size);
+    if (this->data_current_name) {
+        auto clab = this->dlabels.find(this->data_current_name);
+        uint64_t addr = clab->second.first;
+        clab->second.second = this->data_current_address - addr;
+    }
+    this->data_current_name = (char*)name;
 }
 
-uint32_t vAsm::label_resolve(const char *name) {
+uint64_t vAsm::label_resolve(const char *name) {
     auto it = this->labels.find(name);
     auto it1 = this->dlabels.find(name);
     if (it != this->labels.end()) {
-        uint32_t val = it->second.first;
+        uint64_t val = it->second.first;
         val += BASE_ADDR::B_TEXT;
-        printf("%#x\n", val);
         return val;
     }
     else if (it1 != this->dlabels.end()) {
-        uint32_t val = it1->second.first;
+        uint64_t val = it1->second.first;
         val += BASE_ADDR::B_DATA;
         return val;
     }
@@ -330,9 +341,9 @@ uint32_t vAsm::label_resolve(const char *name) {
     }
 }
 
-size_t vAsm::jump(char *buffer, size_t c_pos, uint32_t addr) {
+size_t vAsm::jump(char *buffer, size_t c_pos, uint64_t addr) {
     uint8_t inst = I_JMP_OP;
-    uint32_t jmpof = addr-this->current_address -5;
+    uint64_t jmpof = addr-this->current_address -5;
 
     uint8_t val[4];
     
@@ -346,9 +357,9 @@ size_t vAsm::jump(char *buffer, size_t c_pos, uint32_t addr) {
     return c_pos + size;
 }
 
-size_t vAsm::call(char *buffer, size_t c_pos, uint32_t addr) {
+size_t vAsm::call(char *buffer, size_t c_pos, uint64_t addr) {
     uint8_t inst = I_CALL_OP;
-    uint32_t jmpof = addr-this->current_address-BASE_ADDR::B_TEXT -5;
+    uint64_t jmpof = addr-this->current_address-BASE_ADDR::B_TEXT -5;
 
     uint8_t val[4];
     
@@ -368,6 +379,41 @@ size_t vAsm::ascii(char *buffer, size_t c_pos, const char *value) {
     memcpy(buffer + c_pos, value, size);
     this->data_current_address += size;
     return c_pos + size;
+}
+
+size_t vAsm::resb(char *buffer, size_t c_pos, size_t value) {
+    char *barray = (char*)malloc(value * sizeof(char));
+    size_t size = value;
+    for (unsigned _i=0; _i<size; _i++) {
+        barray[_i] = 0;
+    }
+    memcpy(buffer + c_pos, barray, size);
+    this->data_current_address += size;
+    return c_pos + size;
+}
+
+size_t vAsm::labsize(uint64_t value) {
+    for (auto &label : this->dlabels) {
+        uint64_t addr = label.second.first;
+        size_t size = label.second.second;
+        if (addr+BASE_ADDR::B_DATA == value) {
+            return size;
+        }
+    }
+    return 0;
+}
+
+size_t vAsm::dbi32(char *buffer, size_t c_pos, int32_t value) {
+    uint8_t val[4];
+
+    for (int i = 0; i < 4; ++i) { val[i] = (value >> (8 * i)) & 0xFF; }
+
+    size_t size = sizeof(val);
+
+    memcpy(buffer + c_pos, val, sizeof(val));
+    this->data_current_address += size;
+    return c_pos + size;
+
 }
 
 size_t vAsm::move_i64(char* buffer, size_t c_pos, uint8_t reg, uint64_t value) {
